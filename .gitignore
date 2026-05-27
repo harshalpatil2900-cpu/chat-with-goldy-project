@@ -7,13 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build folders
 dist
 dist-ssr
 .output
 .vinxi
 .tanstack/**
 .nitro
+
+# Environment files (IMPORTANT)
+.env
+.env.local
+.env.development.local
+.env.production.local
+
+# Local files
 *.local
 
 # Wrangler / Cloudflare
@@ -30,3 +41,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Misc
+coverage
+.cache
+temp
+tmp
