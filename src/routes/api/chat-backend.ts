@@ -3,133 +3,46 @@ import { z } from "zod";
 
 type Mode = "general" | "coding" | "study";
 
+const MODEL_NAME = "gemini-2.5-flash-lite";
+
 const SYSTEM_PROMPTS: Record<Mode, string> = {
   general: `
 You are Goldy, an advanced AI assistant.
 
-Always respond in valid Markdown only.
-Always start with a top-level heading (#).
-
-Give detailed, professional, and beautifully formatted answers like ChatGPT.
-
-Answer Rules:
-- Respond only in markdown
-- Use proper headings (#, ##, ###)
-- Use paragraphs with clear spacing
-- Use bullet points and numbered lists when appropriate
-- Use tables when comparing things
-- Bold important keywords
-- Keep answers visually clean and readable
-- Avoid one huge paragraph
-- Do not answer as a single line or fragmented bullet list only
-- Use a short summary at the end
-- Never output plain text without markdown structure
-
-Response Structure Example:
-
-# Main Topic
-
-## Overview
-Short introduction.
-
-## Key Points
-- Point 1
-- Point 2
-- Point 3
-
-## Detailed Explanation
-Explain step-by-step.
-
-## Example
-Give examples when useful.
-
-## Summary
-End with a short summary.
-
-Behavior Rules:
-- Be intelligent and engaging
-- Explain in simple but professional language
-- Help users deeply understand topics
-- For career questions, give practical guidance
-- For coding questions, give optimized code blocks
-- For study topics, teach like a teacher
+Rules:
+- Always respond in valid Markdown
+- Always start with a heading
+- Use headings, bullet points, tables, and bold keywords
+- Give clear, structured, ChatGPT-style answers
+- Never give one big paragraph
+- End with a short summary
 `,
 
   coding: `
 You are Goldy Coding Mentor.
 
-Always respond in valid Markdown only.
-Always start with a top-level heading (#).
-
 Rules:
-- Always use markdown
-- Use code blocks with language names
-- Explain logic step-by-step
-- Give optimized solutions
-- Explain beginner-friendly
-- Use headings and bullet points
-- Mention time complexity when useful
-- Give interview tips
-- Avoid huge paragraphs
-- Use a short summary at the end
-- Never output plain text without markdown structure
-
-Example format:
-
-# Problem Explanation
-
-## Approach
-- Step 1
-- Step 2
-
-## Code
-
-\`\`\`java
-// code here
-\`\`\`
-
-## Time Complexity
-O(n)
+- Explain code step by step
+- Use proper code blocks with language names
+- Mention time and space complexity when useful
+- Give beginner-friendly explanations
+- Use Markdown formatting
 `,
 
   study: `
 You are Goldy Study Booster.
 
-Always respond in valid Markdown only.
-Always start with a top-level heading (#).
-
 Rules:
-- Teach like a professional teacher
-- Use headings
-- Use bullet points
-- Explain step-by-step
-- Use examples and analogies
-- Keep formatting clean
-- Give summaries
-- Use markdown beautifully
-- Avoid huge paragraphs
-- Use a short summary at the end
-- Never output plain text without markdown structure
-
-Structure:
-
-# Topic Name
-
-## Simple Definition
-
-## Key Concepts
-
-## Examples
-
-## Important Points
-
-## Summary
+- Teach in simple words
+- Use headings and bullet points
+- Give examples and summaries
+- Explain step by step
+- Use Markdown formatting
 `,
 };
 
 const ChatSchema = z.object({
   mode: z.enum(["general", "coding", "study"]).optional(),
-
   messages: z.array(
     z.object({
       role: z.enum(["user", "assistant"]),
@@ -138,13 +51,83 @@ const ChatSchema = z.object({
   ),
 });
 
+function needsRealTimeData(text: string): boolean {
+  const realTimeKeywords = [
+    "price",
+    "rate",
+    "today",
+    "current",
+    "now",
+    "latest",
+    "live",
+    "stock",
+    "crypto",
+    "bitcoin",
+    "gold",
+    "silver",
+    "weather",
+    "news",
+    "score",
+    "match",
+    "rupee",
+    "dollar",
+    "petrol",
+    "diesel",
+    "nifty",
+    "sensex",
+  ];
+
+  const lower = text.toLowerCase();
+  return realTimeKeywords.some((kw) => lower.includes(kw));
+}
+
+async function getRealTimeContext(
+  query: string,
+  apiKey: string,
+): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Give the most current useful context for this user query: "${query}". If exact real-time data is unavailable, clearly say it may vary.`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 700,
+          },
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    return (
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 export const Route = createFileRoute("/api/chat-backend")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
           const body = await request.json();
-
           const parsed = ChatSchema.safeParse(body);
 
           if (!parsed.success) {
@@ -165,36 +148,51 @@ export const Route = createFileRoute("/api/chat-backend")({
             );
           }
 
-          const currentDate = new Date().toLocaleString();
+          const currentDate = new Date().toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            dateStyle: "full",
+            timeStyle: "short",
+          });
+
+          const lastUserMessage =
+            messages.filter((m) => m.role === "user").pop()?.content || "";
+
+          let realTimeContext = "";
+
+          if (needsRealTimeData(lastUserMessage)) {
+            realTimeContext = await getRealTimeContext(lastUserMessage, apiKey);
+          }
 
           const systemPrompt = `
 ${SYSTEM_PROMPTS[mode ?? "general"]}
 
-Current Date and Time: ${currentDate}
+Current Date and Time in India: ${currentDate}
 
-If the user asks today's date, time, month, year, or day,
-always use this real current date and time.
+If user asks date/time/day/month/year, use this current date and time.
+
+${
+  realTimeContext
+    ? `Useful current context:
+${realTimeContext}`
+    : ""
+}
 `;
 
           const conversationHistory = messages
-            .map((m) => {
-              if (m.role === "user") {
-                return `User: ${m.content}`;
-              }
-
-              return `Assistant: ${m.content}`;
-            })
+            .map((m) =>
+              m.role === "user"
+                ? `User: ${m.content}`
+                : `Assistant: ${m.content}`,
+            )
             .join("\n\n");
 
           const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
             {
               method: "POST",
-
               headers: {
                 "Content-Type": "application/json",
               },
-
               body: JSON.stringify({
                 contents: [
                   {
@@ -205,12 +203,11 @@ always use this real current date and time.
                     ],
                   },
                 ],
-
                 generationConfig: {
-                  temperature: 0.1,
+                  temperature: 0.2,
                   topP: 0.9,
                   topK: 40,
-                  maxOutputTokens: 4096,
+                  maxOutputTokens: 2048,
                 },
               }),
             },
@@ -221,8 +218,15 @@ always use this real current date and time.
           if (!response.ok) {
             console.error("Gemini API error:", data);
 
+            const errorCode = data?.error?.code;
+
             return Response.json(
-              { error: "Gemini API error" },
+              {
+                error:
+                  errorCode === 429
+                    ? "Goldy is taking a short break due to high demand. Please wait 30 seconds and try again! 🙏"
+                    : "Goldy is currently working on the backend. Please try again in a moment! ⚙️",
+              },
               { status: 500 },
             );
           }
@@ -238,7 +242,10 @@ always use this real current date and time.
           console.error(error);
 
           return Response.json(
-            { error: "Server error" },
+            {
+              error:
+                "Goldy is currently working on the backend. Please try again in a moment! ⚙️",
+            },
             { status: 500 },
           );
         }
