@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Code2, GraduationCap } from "lucide-react";
+import { Sparkles, Code2, GraduationCap, Moon, Sun } from "lucide-react";
 
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -22,15 +22,12 @@ import {
 
 export const Route = createFileRoute("/")({
   component: ChatPage,
-
   head: () => ({
     meta: [
       { title: "Chat With Goldy — AI Chat Assistant" },
-
       {
         name: "description",
-        content:
-          "Goldy is a smart AI assistant with coding and study modes.",
+        content: "Goldy is a smart AI assistant with coding and study modes.",
       },
     ],
   }),
@@ -43,14 +40,12 @@ const SUGGESTIONS = [
     title: "Plan my day",
     prompt: "Help me plan my day productively.",
   },
-
   {
     mode: "coding" as Mode,
     icon: Code2,
     title: "Explain React",
     prompt: "Explain React useEffect simply.",
   },
-
   {
     mode: "study" as Mode,
     icon: GraduationCap,
@@ -64,13 +59,26 @@ function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("general");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loaded = loadConversations();
+    const savedTheme = localStorage.getItem("goldy-theme") as "dark" | "light" | null;
+    const selectedTheme = savedTheme ?? "dark";
 
+    setTheme(selectedTheme);
+    document.documentElement.classList.toggle("dark", selectedTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("goldy-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const loaded = loadConversations();
     setConversations(loaded);
 
     if (loaded.length > 0) {
@@ -97,9 +105,7 @@ function ChatPage() {
 
   const handleNew = () => {
     const convo = createConversation(mode);
-
     setConversations((prev) => [convo, ...prev]);
-
     setActiveId(convo.id);
   };
 
@@ -127,14 +133,11 @@ function ChatPage() {
 
   const send = async (text: string, presetMode?: Mode) => {
     const useMode = presetMode ?? mode;
-
     let convo = active;
 
     if (!convo) {
       convo = createConversation(useMode);
-
       setConversations((prev) => [convo!, ...prev]);
-
       setActiveId(convo.id);
     }
 
@@ -165,7 +168,6 @@ function ChatPage() {
     setIsStreaming(true);
 
     const controller = new AbortController();
-
     abortRef.current = controller;
 
     try {
@@ -178,16 +180,13 @@ function ChatPage() {
 
       const resp = await fetch("/api/chat-backend", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           messages: history,
           mode: useMode,
         }),
-
         signal: controller.signal,
       });
 
@@ -207,7 +206,6 @@ function ChatPage() {
         }));
 
         setIsStreaming(false);
-
         return;
       }
 
@@ -216,9 +214,7 @@ function ChatPage() {
       updateConvo(convoId, (c) => ({
         ...c,
         messages: c.messages.map((m) =>
-          m.id === assistantMsg.id
-            ? { ...m, content: aiText }
-            : m,
+          m.id === assistantMsg.id ? { ...m, content: aiText } : m,
         ),
       }));
     } catch (error) {
@@ -270,22 +266,37 @@ function ChatPage() {
               className="w-8 h-8 rounded-full"
             />
 
-            <h1 className="text-lg font-bold text-gradient">
-              Goldy
-            </h1>
+            <h1 className="text-lg font-bold text-gradient">Goldy</h1>
           </div>
 
-          <ModePicker
-            value={mode}
-            onChange={setMode}
-            disabled={isStreaming}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-accent transition"
+              title="Toggle dark/light mode"
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  Light
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  Dark
+                </>
+              )}
+            </button>
+
+            <ModePicker
+              value={mode}
+              onChange={setMode}
+              disabled={isStreaming}
+            />
+          </div>
         </header>
 
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-4 py-6"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
           {showEmpty ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <img
@@ -294,9 +305,7 @@ function ChatPage() {
                 className="w-20 h-20 rounded-2xl mb-5"
               />
 
-              <h2 className="text-4xl font-bold">
-                Hi, I'm Goldy ✨
-              </h2>
+              <h2 className="text-4xl font-bold">Hi, I'm Goldy ✨</h2>
 
               <p className="text-muted-foreground mt-2">
                 Your AI assistant for coding and study help.
@@ -310,13 +319,11 @@ function ChatPage() {
                       setMode(s.mode);
                       send(s.prompt, s.mode);
                     }}
-                    className="p-4 rounded-xl border border-border hover:border-primary"
+                    className="p-4 rounded-xl border border-border hover:border-primary hover:bg-accent/40 transition text-left"
                   >
                     <s.icon className="w-5 h-5 text-primary mb-2" />
 
-                    <div className="font-medium text-sm">
-                      {s.title}
-                    </div>
+                    <div className="font-medium text-sm">{s.title}</div>
 
                     <div className="text-xs text-muted-foreground mt-1">
                       {s.prompt}
@@ -328,10 +335,7 @@ function ChatPage() {
           ) : (
             <div className="max-w-3xl mx-auto space-y-5">
               {active.messages.map((m) => (
-                <MessageBubble
-                  key={m.id}
-                  message={m}
-                />
+                <MessageBubble key={m.id} message={m} />
               ))}
 
               {isStreaming && (
