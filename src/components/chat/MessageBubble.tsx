@@ -91,19 +91,13 @@ function FullResponseCopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-border bg-background/80 hover:bg-accent transition"
+      className="absolute top-2 right-2 z-10 p-2 rounded-lg border border-border bg-background/80 hover:bg-accent transition"
       title="Copy response"
     >
       {copied ? (
-        <>
-          <Check className="w-3 h-3 text-green-500" />
-          Copied
-        </>
+        <Check className="w-4 h-4 text-green-500" />
       ) : (
-        <>
-          <Clipboard className="w-3 h-3" />
-          Copy
-        </>
+        <Clipboard className="w-4 h-4" />
       )}
     </button>
   );
@@ -144,7 +138,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           className={`relative px-4 py-3 rounded-2xl shadow-sm ${
             isUser
               ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-card text-card-foreground rounded-tl-sm border border-border pr-16"
+              : "bg-card text-card-foreground rounded-tl-sm border border-border pr-20"
           }`}
         >
           {message.content ? (
