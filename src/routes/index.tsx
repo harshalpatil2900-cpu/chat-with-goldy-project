@@ -60,6 +60,7 @@ function ChatPage() {
   const [mode, setMode] = useState<Mode>("general");
   const [isStreaming, setIsStreaming] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [voiceAccent, setVoiceAccent] = useState<"en-IN" | "en-US">("en-IN");
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -288,6 +289,18 @@ function ChatPage() {
               )}
             </button>
 
+
+           <select
+             value={voiceAccent}
+             onChange={(e) =>
+              setVoiceAccent(e.target.value as "en-IN" | "en-US")
+             }
+             className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+             <option value="en-IN">🇮🇳 Indian</option>
+               <option value="en-US">🇺🇸 American</option>
+            </select>
+
             <ModePicker
               value={mode}
               onChange={setMode}
@@ -335,7 +348,11 @@ function ChatPage() {
           ) : (
             <div className="max-w-3xl mx-auto space-y-5">
               {active.messages.map((m) => (
-                <MessageBubble key={m.id} message={m} />
+                <MessageBubble
+                  key={m.id}
+                  message={m}
+                  voiceAccent={voiceAccent}
+                />
               ))}
 
               {isStreaming && (

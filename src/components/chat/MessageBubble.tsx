@@ -11,6 +11,8 @@ import type { ChatMessage } from "@/lib/frontend-chat-storage";
 
 const goldyLogo = "/goldy-logo.png";
 
+type VoiceAccent = "en-IN" | "en-US";
+
 function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], {
     hour: "2-digit",
@@ -42,32 +44,50 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function SpeakButton({ text }: { text: string }) {
+function SpeakButton({
+  text,
+  voiceAccent,
+}: {
+  text: string;
+  voiceAccent: VoiceAccent;
+}) {
   const [speaking, setSpeaking] = useState(false);
 
   const handleSpeak = () => {
+    if (!("speechSynthesis" in window)) {
+      alert("Voice output is not supported in this browser.");
+      return;
+    }
+
     if (speaking) {
-      speechSynthesis.cancel();
+      window.speechSynthesis.cancel();
       setSpeaking(false);
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, " code block skipped ")
+      .replace(/[#*_`>|-]/g, " ")
+      .slice(0, 1200);
 
-    utterance.lang = "en-IN";
-    utterance.rate = 1;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+
+    utterance.lang = voiceAccent;
+    utterance.rate = 0.95;
     utterance.pitch = 1;
 
     utterance.onstart = () => setSpeaking(true);
     utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
 
-    speechSynthesis.speak(utterance);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
   };
 
   return (
     <button
       onClick={handleSpeak}
-      className="absolute top-2 right-12 z-10 p-2 rounded-md border border-border bg-background/80 hover:bg-accent transition"
+      className="absolute top-2 right-12 z-10 p-2 rounded-lg border border-border bg-background/80 hover:bg-accent transition"
       title={speaking ? "Stop speaking" : "Read aloud"}
     >
       {speaking ? (
@@ -103,7 +123,13 @@ function FullResponseCopyButton({ text }: { text: string }) {
   );
 }
 
-export function MessageBubble({ message }: { message: ChatMessage }) {
+export function MessageBubble({
+  message,
+  voiceAccent,
+}: {
+  message: ChatMessage;
+  voiceAccent: VoiceAccent;
+}) {
   const isUser = message.role === "user";
 
   return (
@@ -148,10 +174,11 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               </p>
             ) : (
               <>
-                <>
-                  <SpeakButton text={message.content} />
-                  <FullResponseCopyButton text={message.content} />
-                 </>
+                <SpeakButton
+                  text={message.content}
+                  voiceAccent={voiceAccent}
+                />
+                <FullResponseCopyButton text={message.content} />
 
                 <div className="prose prose-invert max-w-none text-sm leading-relaxed prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-foreground prose-p:my-2 prose-p:leading-relaxed prose-strong:text-primary prose-strong:font-bold prose-em:text-muted-foreground prose-li:text-foreground prose-li:my-0.5 prose-ul:my-2 prose-ol:my-2 prose-code:text-primary prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-pre:my-3 prose-pre:overflow-x-auto prose-table:border-collapse prose-table:w-full prose-table:my-3 prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-foreground prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-hr:border-border">
                   <ReactMarkdown
