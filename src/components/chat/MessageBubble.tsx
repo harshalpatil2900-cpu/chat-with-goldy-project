@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { motion } from "motion/react";
-import { Copy, Check, Clipboard } from "lucide-react";
+import { Copy, Check, Clipboard, Volume2, VolumeX } from "lucide-react";
 
 import type { ChatMessage } from "@/lib/frontend-chat-storage";
 
@@ -37,6 +37,43 @@ function CopyButton({ text }: { text: string }) {
         <Check className="w-3.5 h-3.5 text-green-400" />
       ) : (
         <Copy className="w-3.5 h-3.5 text-gray-400" />
+      )}
+    </button>
+  );
+}
+
+function SpeakButton({ text }: { text: string }) {
+  const [speaking, setSpeaking] = useState(false);
+
+  const handleSpeak = () => {
+    if (speaking) {
+      speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "en-IN";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+
+    speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <button
+      onClick={handleSpeak}
+      className="absolute top-2 right-12 z-10 p-2 rounded-md border border-border bg-background/80 hover:bg-accent transition"
+      title={speaking ? "Stop speaking" : "Read aloud"}
+    >
+      {speaking ? (
+        <VolumeX className="w-4 h-4 text-red-500" />
+      ) : (
+        <Volume2 className="w-4 h-4" />
       )}
     </button>
   );
@@ -117,7 +154,10 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               </p>
             ) : (
               <>
-                <FullResponseCopyButton text={message.content} />
+                <>
+                  <SpeakButton text={message.content} />
+                  <FullResponseCopyButton text={message.content} />
+                 </>
 
                 <div className="prose prose-invert max-w-none text-sm leading-relaxed prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-foreground prose-p:my-2 prose-p:leading-relaxed prose-strong:text-primary prose-strong:font-bold prose-em:text-muted-foreground prose-li:text-foreground prose-li:my-0.5 prose-ul:my-2 prose-ol:my-2 prose-code:text-primary prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-pre:my-3 prose-pre:overflow-x-auto prose-table:border-collapse prose-table:w-full prose-table:my-3 prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-foreground prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-hr:border-border">
                   <ReactMarkdown
