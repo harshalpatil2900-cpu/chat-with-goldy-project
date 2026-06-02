@@ -32,7 +32,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors"
+      className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-smooth hover-scale"
       title="Copy code"
     >
       {copied ? (
@@ -87,7 +87,7 @@ function SpeakButton({
   return (
     <button
       onClick={handleSpeak}
-      className="absolute top-2 right-12 z-10 p-2 rounded-lg border border-border bg-background/80 hover:bg-accent transition"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition-smooth hover-scale hover:bg-white/20"
       title={speaking ? "Stop speaking" : "Read aloud"}
     >
       {speaking ? (
@@ -111,7 +111,7 @@ function FullResponseCopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 z-10 p-2 rounded-lg border border-border bg-background/80 hover:bg-accent transition"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition-smooth hover-scale hover:bg-white/20"
       title="Copy response"
     >
       {copied ? (
@@ -134,18 +134,21 @@ export function MessageBubble({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      initial={{ opacity: 0, y: 10, ...(isUser ? { x: 24 } : { x: -24 }) }}
+      animate={{ opacity: 1, y: 0, x: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: "easeOut",
+      }}
+      className={`flex gap-4 ${isUser ? "flex-row-reverse" : "flex-row"}`}
     >
       <div className="shrink-0 mt-1">
         {isUser ? (
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shadow-md">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#06B6D4] text-xs font-semibold text-white shadow-[0_15px_40px_rgba(124,58,237,0.25)]">
             You
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full shadow-md overflow-hidden border border-border">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.2)] border border-white/10 overflow-hidden">
             <img
               src={goldyLogo}
               alt="Goldy"
@@ -161,10 +164,10 @@ export function MessageBubble({
         }`}
       >
         <div
-          className={`relative px-4 py-3 rounded-2xl shadow-sm ${
+          className={`relative rounded-[1.75rem] px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)] ${
             isUser
-              ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-card text-card-foreground rounded-tl-sm border border-border pr-20"
+              ? "bg-gradient-to-br from-[#7C3AED] to-[#06B6D4] text-white rounded-br-none"
+              : "glass-card text-white border border-white/10 rounded-bl-none pr-28"
           }`}
         >
           {message.content ? (
@@ -174,13 +177,15 @@ export function MessageBubble({
               </p>
             ) : (
               <>
-                <SpeakButton
-                  text={message.content}
-                  voiceAccent={voiceAccent}
-                />
-                <FullResponseCopyButton text={message.content} />
+                <div className="absolute top-3 right-3 flex items-center gap-2 z-10 rounded-2xl border border-white/10 bg-black/20 p-1.5 backdrop-blur-md">
+                  <SpeakButton
+                    text={message.content}
+                    voiceAccent={voiceAccent}
+                  />
+                  <FullResponseCopyButton text={message.content} />
+                </div>
 
-                <div className="prose prose-invert max-w-none text-sm leading-relaxed prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-foreground prose-p:my-2 prose-p:leading-relaxed prose-strong:text-primary prose-strong:font-bold prose-em:text-muted-foreground prose-li:text-foreground prose-li:my-0.5 prose-ul:my-2 prose-ol:my-2 prose-code:text-primary prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-pre:my-3 prose-pre:overflow-x-auto prose-table:border-collapse prose-table:w-full prose-table:my-3 prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-foreground prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-hr:border-border">
+                <div className="prose prose-invert max-w-none w-full text-sm leading-relaxed prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-foreground prose-p:my-2 prose-p:leading-relaxed prose-strong:text-primary prose-strong:font-bold prose-em:text-muted-foreground prose-li:text-foreground prose-li:my-0.5 prose-ul:my-2 prose-ol:my-2 prose-code:text-primary prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-pre:my-3 prose-pre:overflow-x-auto prose-table:border-collapse prose-table:w-full prose-table:my-3 prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-foreground prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-hr:border-border">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeHighlight]}

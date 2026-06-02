@@ -25,7 +25,7 @@ export function ModePicker({
             key={id}
             disabled={disabled}
             onClick={() => onChange(id)}
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition-smooth hover-scale ${
               active
                 ? "bg-gradient-primary text-primary-foreground shadow-glow"
                 : "text-muted-foreground hover:text-foreground"

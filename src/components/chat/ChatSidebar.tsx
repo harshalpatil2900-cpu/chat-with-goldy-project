@@ -17,92 +17,77 @@ export function ChatSidebar({
   onDelete: (id: string) => void;
 }) {
   return (
-    <aside className="hidden md:flex flex-col w-72 bg-sidebar/95 backdrop-blur-xl border-r border-sidebar-border h-screen">
-      {/* Header */}
-      <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
-        <div className="w-11 h-11 rounded-2xl bg-gradient-primary shadow-xl flex items-center justify-center overflow-hidden ring-2 ring-primary/30">
+    <aside className="hidden md:flex h-screen w-80 flex-col glass-panel border-r border-white/10">
+      <div className="flex items-center gap-3 border-b border-white/10 px-6 py-5">
+        <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/10 ring-1 ring-white/10 shadow-lg">
           <img
             src={goldyLogo}
             alt="Goldy"
             width={44}
             height={44}
-            className="w-11 h-11 object-cover"
+            className="h-11 w-11 rounded-2xl object-cover"
           />
         </div>
 
         <div>
-          <h1
-            className="text-xl font-bold tracking-wide text-primary"
-            style={{ fontFamily: "Space Grotesk, sans-serif" }}
-          >
-            Goldy AI
-          </h1>
-
-          <p
-            className="text-xs text-muted-foreground mt-1 font-medium tracking-wide"
-            style={{ fontFamily: "Inter, sans-serif" }}
-          >
-            Advanced Assistant
+          <p className="text-[11px] uppercase tracking-[0.32em] text-slate-400">
+            AI Assistant
           </p>
+          <h2 className="text-xl font-semibold tracking-tight text-white">
+            Goldy AI
+          </h2>
         </div>
       </div>
 
-      {/* New Chat Button */}
       <button
         onClick={onNew}
-        className="mx-3 mt-4 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-lg hover:scale-[1.02] hover:opacity-90 transition-all duration-300"
+        className="mx-6 mt-5 flex items-center justify-center gap-2 rounded-[1.5rem] bg-gradient-to-r from-[#7C3AED] to-[#06B6D4] px-4 py-3 text-sm font-semibold text-white shadow-[0_20px_60px_rgba(124,58,237,0.16)] hover-scale btn-glow"
       >
         <Plus className="w-4 h-4" />
         New Chat
       </button>
 
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
-        {conversations.length === 0 && (
-          <div className="px-3 py-10 text-center text-xs text-muted-foreground">
-            <Sparkles className="w-6 h-6 mx-auto mb-3 opacity-60" />
-            No chats yet
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-3">
+        {conversations.length === 0 ? (
+          <div className="glass-card rounded-[1.75rem] p-5 text-center text-sm text-muted">
+            <Sparkles className="mx-auto mb-3 h-7 w-7 text-muted opacity-70" />
+            <div className="font-medium text-foreground">No chats yet</div>
+            <p className="mt-2 text-[13px] text-muted">
+              Start a new chat to build your first Goldy conversation.
+            </p>
           </div>
-        )}
-
-        {conversations.map((c) => (
-          <div
-            key={c.id}
-            onClick={() => onSelect(c.id)}
-            className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-              activeId === c.id
-                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-md"
-                : "hover:bg-sidebar-accent/60 text-muted-foreground"
-            }`}
-          >
-            <MessageSquare className="w-4 h-4 shrink-0" />
-
-            <span className="flex-1 text-sm truncate font-medium">
-              {c.title}
-            </span>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(c.id);
-              }}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"
-              aria-label="Delete chat"
+        ) : (
+          conversations.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => onSelect(c.id)}
+              className={`group flex cursor-pointer items-center gap-3 rounded-[1.5rem] border px-4 py-4 transition-smooth card-hover ${
+                activeId === c.id
+                  ? "border-[#7C3AED]/40 bg-[#7C3AED]/10 text-white shadow-[0_20px_60px_rgba(124,58,237,0.14)]"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:border-[#06B6D4]/30 hover:bg-[#06B6D4]/10 hover:text-white"
+              }`}
             >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <span className="flex-1 overflow-hidden text-sm font-medium leading-tight text-ellipsis whitespace-nowrap">
+                {c.title}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(c.id);
+                }}
+                className="opacity-0 transition-smooth group-hover:opacity-100 text-slate-400 hover:text-amber-400"
+                aria-label="Delete chat"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
-        <div
-          className="text-[11px] text-muted-foreground text-center"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Powered by Gemini AI ⚡
-        </div>
+      <div className="border-t border-white/10 px-6 py-4 text-center text-[11px] text-slate-500">
+        Powered by Harshal Patil
       </div>
     </aside>
   );
