@@ -97,7 +97,7 @@ export function ChatInput({
 
   return (
     <div className="glass-panel border-t border-white/10 p-4">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-full sm:max-w-6xl flex-col gap-3">
         <div className="glass-card flex flex-col gap-3 rounded-[2rem] p-4 transition-smooth focus-glow focus-within:border-[#7C3AED]/40">
           <textarea
             ref={ref}

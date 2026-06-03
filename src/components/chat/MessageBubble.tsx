@@ -159,7 +159,7 @@ export function MessageBubble({
       </div>
 
       <div
-        className={`max-w-[80%] flex flex-col gap-1 ${
+        className={`max-w-[90%] md:max-w-[80%] flex flex-col gap-1 ${
           isUser ? "items-end" : "items-start"
         }`}
       >
@@ -167,7 +167,7 @@ export function MessageBubble({
           className={`relative rounded-[1.75rem] px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)] ${
             isUser
               ? "bg-gradient-to-br from-[#7C3AED] to-[#06B6D4] text-white rounded-br-none"
-              : "glass-card text-white border border-white/10 rounded-bl-none pr-28"
+                : "glass-card text-white border border-white/10 rounded-bl-none pr-12 md:pr-28"
           }`}
         >
           {message.content ? (

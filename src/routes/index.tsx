@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Code2, GraduationCap, Moon, Sun } from "lucide-react";
+import { Sparkles, Code2, GraduationCap, Moon, Sun, Plus } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ModePicker } from "@/components/chat/ModePicker";
 import { TypingDots } from "@/components/chat/TypingDots";
+import { AuthBox } from "@/components/auth/AuthBox";
+import { supabase } from "@/integrations/supabase/client";
 
 const goldyLogo = "/goldy-logo.png";
 
@@ -22,15 +25,6 @@ import {
 
 export const Route = createFileRoute("/")({
   component: ChatPage,
-  head: () => ({
-    meta: [
-      { title: "Chat With Goldy — AI Chat Assistant" },
-      {
-        name: "description",
-        content: "Goldy is a smart AI assistant with coding and study modes.",
-      },
-    ],
-  }),
 });
 
 const SUGGESTIONS = [
@@ -62,8 +56,27 @@ function ChatPage() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [voiceAccent, setVoiceAccent] = useState<"en-IN" | "en-US">("en-IN");
 
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("goldy-theme") as
@@ -186,13 +199,8 @@ function ChatPage() {
 
       const resp = await fetch("/api/chat-backend", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: history,
-          mode: useMode,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, mode: useMode }),
         signal: controller.signal,
       });
 
@@ -203,14 +211,10 @@ function ChatPage() {
           ...c,
           messages: c.messages.map((m) =>
             m.id === assistantMsg.id
-              ? {
-                  ...m,
-                  content: `⚠️ ${data.error || "Something went wrong"}`,
-                }
+              ? { ...m, content: `⚠️ ${data.error || "Something went wrong"}` }
               : m,
           ),
         }));
-
         setIsStreaming(false);
         return;
       }
@@ -230,10 +234,7 @@ function ChatPage() {
         ...c,
         messages: c.messages.map((m) =>
           m.id === assistantMsg.id
-            ? {
-                ...m,
-                content: "⚠️ Connection error.",
-              }
+            ? { ...m, content: "⚠️ Connection error." }
             : m,
         ),
       }));
@@ -243,7 +244,23 @@ function ChatPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   const showEmpty = !active || active.messages.length === 0;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        Loading Goldy AI...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthBox />;
+  }
 
   return (
     <div className="app-shell relative min-h-screen overflow-hidden text-[#F8FAFC] animate-fade-in">
@@ -266,11 +283,8 @@ function ChatPage() {
           activeId={activeId}
           onSelect={(id) => {
             setActiveId(id);
-
             const convo = conversations.find((c) => c.id === id);
-            if (convo) {
-              setMode(convo.mode);
-            }
+            if (convo) setMode(convo.mode);
           }}
           onNew={handleNew}
           onDelete={handleDelete}
@@ -296,16 +310,24 @@ function ChatPage() {
                     Goldy AI
                   </h1>
                   <p className="mt-1 max-w-2xl text-sm text-muted">
-                    A modern AI assistant for coding, study, and productivity with premium SaaS polish.
+                    Code smarter. Learn faster. Build your future with Goldy AI.
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
+                  onClick={handleNew}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-[#7C3AED] to-[#06B6D4] px-3 py-2 text-sm font-medium text-white md:hidden"
+                  title="New chat"
+                >
+                  <Plus className="w-4 h-4" />
+                  New
+                </button>
+
+                <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-card px-4 py-3 text-sm font-medium text-foreground transition-smooth hover-scale btn-glow"
-                  title="Toggle dark/light mode"
                 >
                   {theme === "dark" ? (
                     <>
@@ -326,7 +348,6 @@ function ChatPage() {
                     setVoiceAccent(e.target.value as "en-IN" | "en-US")
                   }
                   className="rounded-2xl border border-white/10 bg-card px-4 py-3 text-sm text-foreground outline-none transition-smooth hover-scale focus-glow hover:border-[#7C3AED]"
-                  title="Select voice accent"
                 >
                   <option value="en-IN">🇮🇳 Indian</option>
                   <option value="en-US">🇺🇸 American</option>
@@ -337,6 +358,13 @@ function ChatPage() {
                   onChange={setMode}
                   disabled={isStreaming}
                 />
+
+                <button
+                  onClick={handleLogout}
+                  className="rounded-2xl border border-white/10 bg-card px-4 py-3 text-sm font-medium text-foreground transition-smooth hover:bg-red-500/20 hover:text-red-300"
+                >
+                  Logout
+                </button>
               </div>
             </div>
           </header>
@@ -350,12 +378,13 @@ function ChatPage() {
                       Welcome to Goldy
                     </p>
                     <h2 className="mt-4 text-4xl font-semibold leading-tight text-foreground">
-                      The premium AI assistant for smarter work and sharper learning.
+                      Code smarter. Learn faster. Build your future with Goldy AI.
                     </h2>
                     <p className="mt-4 text-base leading-7 text-muted">
                       Goldy brings you instant guidance, code assistance, and study support with a polished AI SaaS experience.
                     </p>
-                    <div className="mt-8 grid gap-4 sm:grid-cols-3">
+
+                    <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-3">
                       {SUGGESTIONS.map((s, idx) => (
                         <button
                           key={s.title}
@@ -367,31 +396,27 @@ function ChatPage() {
                           style={{ animationDelay: `${idx * 100}ms` }}
                         >
                           <s.icon className="mb-3 h-5 w-5 text-[#7C3AED] transition-smooth group-hover:text-[#06B6D4]" />
-                          <div className="text-base font-semibold text-white">{s.title}</div>
-                          <p className="mt-2 text-sm text-slate-400">{s.prompt}</p>
+                          <div className="text-base font-semibold text-white">
+                            {s.title}
+                          </div>
+                          <p className="mt-2 text-sm text-slate-400">
+                            {s.prompt}
+                          </p>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="rounded-[1.75rem] border border-white/10 bg-card p-6 shadow-[0_30px_90px_rgba(0,0,0,0.2)] backdrop-blur-xl card-hover animate-slide-up-sm stagger-3">
-                    <p className="text-sm uppercase tracking-[0.4em] text-muted">
-                      Goldy Branding
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col items-center justify-start text-center shadow-xl">
+                    <p className="text-xs tracking-[0.35em] text-muted-foreground uppercase mb-6">
+                      Goldy AI
                     </p>
-                    <h3 className="mt-4 text-2xl font-semibold text-foreground">
-                      Built for product teams, students, and developers.
-                    </h3>
-                    <div className="mt-6 space-y-4 text-sm text-muted">
-                      <div className="rounded-3xl border border-white/10 bg-card p-4 card-hover transition-smooth animate-slide-up-sm stagger-1">
-                        Fast answers with polished result cards.
-                      </div>
-                      <div className="rounded-3xl border border-white/10 bg-card p-4 card-hover transition-smooth animate-slide-up-sm stagger-2">
-                        Premium voice and copy tools built in.
-                      </div>
-                      <div className="rounded-3xl border border-white/10 bg-card p-4 card-hover transition-smooth animate-slide-up-sm stagger-3">
-                        Modern SaaS layout with elegant spacing.
-                      </div>
-                    </div>
+
+                    <img
+                      src="/herosection.png"
+                      alt="Goldy Branding"
+                      className="w-[220px] sm:w-[280px] md:w-[380px] lg:w-[500px] xl:w-[600px] h-auto object-contain rounded-3xl drop-shadow-2xl -mt-20 md:-mt-32 ml-2 md:ml-6 translate-y-2 md:translate-y-4"
+                    />
                   </div>
                 </div>
               </div>
