@@ -310,7 +310,7 @@ function ChatPage() {
                     Goldy AI
                   </h1>
                   <p className="mt-1 max-w-2xl text-sm text-muted">
-                    Code smarter. Learn faster. Build your future with Goldy AI.
+                    Learn faster, code smarter, and achieve more with Goldy AI.
                   </p>
                 </div>
               </div>
@@ -378,7 +378,7 @@ function ChatPage() {
                       Welcome to Goldy
                     </p>
                     <h2 className="mt-4 text-4xl font-semibold leading-tight text-foreground">
-                      Code smarter. Learn faster. Build your future with Goldy AI.
+                      The Premium AI assistant for Smarter work and Sharper learning.
                     </h2>
                     <p className="mt-4 text-base leading-7 text-muted">
                       Goldy brings you instant guidance, code assistance, and study support with a polished AI SaaS experience.
@@ -409,11 +409,11 @@ function ChatPage() {
 
                   <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col items-center justify-start text-center shadow-xl">
                     <p className="text-xs tracking-[0.35em] text-muted-foreground uppercase mb-6">
-                      Goldy AI
+                      GOLDY BRANDING
                     </p>
 
                     <img
-                      src="/herosection.png"
+                      src="/herosection.png" 
                       alt="Goldy Branding"
                       className="w-[220px] sm:w-[280px] md:w-[380px] lg:w-[500px] xl:w-[600px] h-auto object-contain rounded-3xl drop-shadow-2xl -mt-20 md:-mt-32 ml-2 md:ml-6 translate-y-2 md:translate-y-4"
                     />
